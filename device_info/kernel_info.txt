@@ -1,0 +1,1 @@
+Linux localhost 4.19.325-cip128-st12-perf-g646d493c15ed #1 SMP PREEMPT Sun Apr 5 10:01:17 UTC 2026 aarch64 Toybox
