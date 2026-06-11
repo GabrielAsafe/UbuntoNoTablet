@@ -275,3 +275,29 @@ com namespaces e opções essenciais para Halium.
 | Vendor Android 12 | favorável |
 | Port Halium existente encontrado | não |
 | Estratégia escolhida | Halium 12 com cópias locais |
+
+
+---
+
+# Atualização — 2026-06-11
+## Boot Halium
+
+O hardware/boot layout foi confirmado como compatível com boot image clássico:
+
+```text
+BOARD_BOOT_HEADER_VERSION := 2
+boot = kernel + ramdisk + dtb
+sem vendor_boot
+```
+
+Foi criado manualmente um `halium-boot.img` usando o kernel compilado, `ramdisk-recovery.img` gzipado e `dtb.img`.
+
+Resultado:
+
+```text
+out/target/product/gta4l/halium-boot.img
+Tamanho: 32M
+SHA256: fa4ddd30be54e297d57eb1e761bee7979c1e4c71dbb81600e82d06d836e6838b
+```
+
+O ramdisk contém componentes Ubuntu Touch/Halium, incluindo `system-image-upgrader`, `install-system` e `ro.ubuntu.recovery=true`.

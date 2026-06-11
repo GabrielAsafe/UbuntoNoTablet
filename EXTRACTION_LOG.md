@@ -503,3 +503,25 @@ Nenhuma partição do tablet foi modificada.
 Nenhum flash foi realizado.
 A etapa seguinte é integrar as árvores locais numa workspace Halium 12 limpa.
 ```
+
+
+---
+
+# Atualização — 2026-06-11
+## Relação da extração com o boot Halium
+
+A análise de `super.img` continua válida como base de vendor/blobs. A nova etapa de boot confirmou que o dispositivo não depende de `vendor_boot`, e que o ramdisk Ubuntu Touch/Halium pode ser empacotado diretamente num `boot.img` clássico junto com kernel e DTB.
+
+Artefacto final criado fora da `super.img`:
+
+```text
+out/target/product/gta4l/halium-boot.img
+```
+
+SHA256:
+
+```text
+fa4ddd30be54e297d57eb1e761bee7979c1e4c71dbb81600e82d06d836e6838b
+```
+
+Isto não altera a extração da `super.img`; apenas fecha a etapa de geração do boot Halium inicial.

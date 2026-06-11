@@ -1,221 +1,433 @@
-gabriel@unknown18c04d2e4dbe:~/Área de Trabalho/UbuntoNoTablet$ ls -lh kernel.config
-head -20 kernel.config
-grep -E "CONFIG_ANDROID|CONFIG_BINDER|CONFIG_ASHMEM|CONFIG_CGROUP|CONFIG_NAMESPACES|CONFIG_OVERLAY_FS|CONFIG_VT|CONFIG_FB|CONFIG_DRM|CONFIG_INPUT|CONFIG_USB_CONFIGFS" kernel.config | sort
--rw-r--r--. 1 gabriel gabriel 150K jun 10 08:08 kernel.config
-#
-# Automatically generated file; DO NOT EDIT.
-# Linux/arm64 4.19.325 Kernel Configuration
-#
-CONFIG_CC_VERSION_TEXT="Android (14054515, +pgo, +bolt, +lto, +mlgo, based on r563880c) clang version 21.0.0 (https://android.googlesource.com/toolchain/llvm-project 5e96669f06077099aa41290cdb4c5e6fa0f59349)"
-CONFIG_GCC_VERSION=0
-CONFIG_CC_IS_CLANG=y
-CONFIG_LD_IS_LLD=y
-CONFIG_CLANG_VERSION=210000
-CONFIG_LLD_VERSION=210000
-CONFIG_CC_CAN_LINK=y
-CONFIG_CC_CAN_LINK_STATIC=y
-CONFIG_CC_HAS_ASM_GOTO=y
-CONFIG_TOOLS_SUPPORT_RELR=y
-CONFIG_IRQ_WORK=y
-CONFIG_BUILDTIME_EXTABLE_SORT=y
-CONFIG_THREAD_INFO_IN_TASK=y
+gabriel@unknown18c04d2e4dbe:~/halium/halium-12-gta4l$ cd ~/halium/halium-12-gta4l
 
-#
-# General setup
-CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"
-CONFIG_ANDROID_BINDERFS=y
-# CONFIG_ANDROID_BINDER_IPC_SELFTEST is not set
-CONFIG_ANDROID_BINDER_IPC=y
-CONFIG_ANDROID_VENDOR_HOOKS=y
-CONFIG_ANDROID=y
-CONFIG_ASHMEM=y
-CONFIG_CGROUP_BPF=y
-CONFIG_CGROUP_CPUACCT=y
-# CONFIG_CGROUP_DEBUG is not set
-# CONFIG_CGROUP_DEVICE is not set
-CONFIG_CGROUP_FREEZER=y
-# CONFIG_CGROUP_NET_CLASSID is not set
-# CONFIG_CGROUP_NET_PRIO is not set
-# CONFIG_CGROUP_PERF is not set
-# CONFIG_CGROUP_PIDS is not set
-# CONFIG_CGROUP_RDMA is not set
-CONFIG_CGROUP_SCHED=y
-CONFIG_CGROUPS=y
-CONFIG_CGROUP_WRITEBACK=y
-# CONFIG_DRM_ANALOGIX_ANX78XX is not set
-# CONFIG_DRM_ARCPGU is not set
-CONFIG_DRM_BRIDGE=y
-# CONFIG_DRM_CDNS_DSI is not set
-# CONFIG_DRM_DEBUG_MM is not set
-# CONFIG_DRM_DEBUG_SELFTEST is not set
-# CONFIG_DRM_DP_AUX_CHARDEV is not set
-# CONFIG_DRM_DP_CEC is not set
-# CONFIG_DRM_DUMB_VGA_DAC is not set
-# CONFIG_DRM_FBDEV_EMULATION is not set
-# CONFIG_DRM_HDLCD is not set
-# CONFIG_DRM_HISI_KIRIN is not set
-# CONFIG_DRM_I2C_ADV7511 is not set
-# CONFIG_DRM_I2C_CH7006 is not set
-# CONFIG_DRM_I2C_NXP_TDA9950 is not set
-# CONFIG_DRM_I2C_NXP_TDA998X is not set
-# CONFIG_DRM_I2C_SIL164 is not set
-CONFIG_DRM_KMS_HELPER=y
-# CONFIG_DRM_LEGACY is not set
-# CONFIG_DRM_LOAD_EDID_FIRMWARE is not set
-# CONFIG_DRM_LONTIUM_LT9611UXC is not set
-# CONFIG_DRM_LVDS_ENCODER is not set
-# CONFIG_DRM_MALI_DISPLAY is not set
-# CONFIG_DRM_MEGACHIPS_STDPXXXX_GE_B850V3_FW is not set
-CONFIG_DRM_MIPI_DSI=y
-# CONFIG_DRM_MSM is not set
-# CONFIG_DRM_NXP_PTN3460 is not set
-# CONFIG_DRM_PANEL_ARM_VERSATILE is not set
-CONFIG_DRM_PANEL_BRIDGE=y
-# CONFIG_DRM_PANEL_ILITEK_IL9322 is not set
-# CONFIG_DRM_PANEL_ILITEK_ILI9881C is not set
-# CONFIG_DRM_PANEL_INNOLUX_P079ZCA is not set
-# CONFIG_DRM_PANEL_JDI_LT070ME05000 is not set
-# CONFIG_DRM_PANEL_LG_LG4573 is not set
-# CONFIG_DRM_PANEL_LVDS is not set
-CONFIG_DRM_PANEL_ORIENTATION_QUIRKS=y
-# CONFIG_DRM_PANEL_ORISETECH_OTM8009A is not set
-# CONFIG_DRM_PANEL_PANASONIC_VVX10F034N00 is not set
-# CONFIG_DRM_PANEL_RASPBERRYPI_TOUCHSCREEN is not set
-# CONFIG_DRM_PANEL_RAYDIUM_RM68200 is not set
-# CONFIG_DRM_PANEL_SAMSUNG_LD9040 is not set
-# CONFIG_DRM_PANEL_SAMSUNG_S6E3HA2 is not set
-# CONFIG_DRM_PANEL_SAMSUNG_S6E63J0X03 is not set
-# CONFIG_DRM_PANEL_SAMSUNG_S6E8AA0 is not set
-# CONFIG_DRM_PANEL_SEIKO_43WVF1G is not set
-# CONFIG_DRM_PANEL_SHARP_LQ101R1SX01 is not set
-# CONFIG_DRM_PANEL_SHARP_LS043T1LE01 is not set
-# CONFIG_DRM_PANEL_SIMPLE is not set
-# CONFIG_DRM_PANEL_SITRONIX_ST7789V is not set
-CONFIG_DRM_PANEL=y
-# CONFIG_DRM_PARADE_PS8622 is not set
-# CONFIG_DRM_PL111 is not set
-# CONFIG_DRM_RCAR_DW_HDMI is not set
-# CONFIG_DRM_RCAR_LVDS is not set
-# CONFIG_DRM_SII902X is not set
-# CONFIG_DRM_SII9234 is not set
-# CONFIG_DRM_SIL_SII8620 is not set
-# CONFIG_DRM_THINE_THC63LVD1024 is not set
-# CONFIG_DRM_TINYDRM is not set
-# CONFIG_DRM_TI_TFP410 is not set
-# CONFIG_DRM_TOSHIBA_TC358767 is not set
-# CONFIG_DRM_UDL is not set
-# CONFIG_DRM_VGEM is not set
-# CONFIG_DRM_VKMS is not set
-CONFIG_DRM=y
-# CONFIG_FB_ARMCLCD is not set
-# CONFIG_FB_BROADSHEET is not set
-CONFIG_FB_CMDLINE=y
-# CONFIG_FB_FOREIGN_ENDIAN is not set
-# CONFIG_FB_IBM_GXT4500 is not set
-# CONFIG_FB_METRONOME is not set
-# CONFIG_FB_MODE_HELPERS is not set
-# CONFIG_FB_MSM is not set
-CONFIG_FB_NOTIFY=y
-# CONFIG_FB_OPENCORES is not set
-# CONFIG_FB_S1D13XXX is not set
-# CONFIG_FB_SIMPLE is not set
-# CONFIG_FB_SMSCUFX is not set
-# CONFIG_FB_SSD1307 is not set
-# CONFIG_FB_TFT is not set
-# CONFIG_FB_TILEBLITTING is not set
-# CONFIG_FB_UDL is not set
-# CONFIG_FB_VIRTUAL is not set
-CONFIG_FB=y
-# CONFIG_INPUT_AD714X is not set
-# CONFIG_INPUT_ADXL34X is not set
-# CONFIG_INPUT_ATI_REMOTE2 is not set
-# CONFIG_INPUT_ATMEL_CAPTOUCH is not set
-# CONFIG_INPUT_BMA150 is not set
-# CONFIG_INPUT_CM109 is not set
-# CONFIG_INPUT_CMA3000 is not set
-# CONFIG_INPUT_DRV260X_HAPTICS is not set
-# CONFIG_INPUT_DRV2665_HAPTICS is not set
-# CONFIG_INPUT_DRV2667_HAPTICS is not set
-# CONFIG_INPUT_E3X0_BUTTON is not set
-# CONFIG_INPUT_EVBUG is not set
-CONFIG_INPUT_EVDEV=y
-CONFIG_INPUT_FF_MEMLESS=y
-# CONFIG_INPUT_GP2A is not set
-# CONFIG_INPUT_GPIO_BEEPER is not set
-# CONFIG_INPUT_GPIO_DECODER is not set
-# CONFIG_INPUT_GPIO is not set
-# CONFIG_INPUT_GPIO_ROTARY_ENCODER is not set
-# CONFIG_INPUT_HBTP_INPUT is not set
-# CONFIG_INPUT_IMS_PCU is not set
-# CONFIG_INPUT_JOYDEV is not set
-CONFIG_INPUT_JOYSTICK=y
-CONFIG_INPUT_KEYBOARD=y
-# CONFIG_INPUT_KEYCOMBO is not set
-# CONFIG_INPUT_KEYRESET is not set
-# CONFIG_INPUT_KEYSPAN_REMOTE is not set
-# CONFIG_INPUT_KXTJ9 is not set
-CONFIG_INPUT_LEDS=y
-# CONFIG_INPUT_MATRIXKMAP is not set
-CONFIG_INPUT_MISC=y
-# CONFIG_INPUT_MMA8450 is not set
-# CONFIG_INPUT_MOUSEDEV is not set
-# CONFIG_INPUT_MOUSE is not set
-# CONFIG_INPUT_PCF8574 is not set
-# CONFIG_INPUT_PM8941_PWRKEY is not set
-# CONFIG_INPUT_PM8XXX_VIBRATOR is not set
-# CONFIG_INPUT_POLLDEV is not set
-# CONFIG_INPUT_POWERMATE is not set
-# CONFIG_INPUT_PWM_BEEPER is not set
-# CONFIG_INPUT_PWM_VIBRA is not set
-CONFIG_INPUT_QPNP_POWER_ON=y
-# CONFIG_INPUT_QTI_HAPTICS is not set
-# CONFIG_INPUT_REGULATOR_HAPTIC is not set
-# CONFIG_INPUT_SOC_BUTTON_ARRAY is not set
-# CONFIG_INPUT_SPARSEKMAP is not set
-# CONFIG_INPUT_TABLET is not set
-CONFIG_INPUT_TOUCHSCREEN=y
-CONFIG_INPUT_UINPUT=y
-CONFIG_INPUT=y
-# CONFIG_INPUT_YEALINK is not set
-CONFIG_NAMESPACES=y
-# CONFIG_OVERLAY_FS_INDEX is not set
-# CONFIG_OVERLAY_FS_METACOPY is not set
-CONFIG_OVERLAY_FS_REDIRECT_ALWAYS_FOLLOW=y
-# CONFIG_OVERLAY_FS_REDIRECT_DIR is not set
-# CONFIG_OVERLAY_FS_XINO_AUTO is not set
-CONFIG_OVERLAY_FS=y
-CONFIG_USB_CONFIGFS_ACM=y
-# CONFIG_USB_CONFIGFS_ECM is not set
-# CONFIG_USB_CONFIGFS_ECM_SUBSET is not set
-# CONFIG_USB_CONFIGFS_EEM is not set
-CONFIG_USB_CONFIGFS_F_ACC=y
-CONFIG_USB_CONFIGFS_F_AUDIO_SRC=y
-CONFIG_USB_CONFIGFS_F_CCID=y
-CONFIG_USB_CONFIGFS_F_CDEV=y
-CONFIG_USB_CONFIGFS_F_DIAG=y
-CONFIG_USB_CONFIGFS_F_FS=y
-CONFIG_USB_CONFIGFS_F_GSI=y
-CONFIG_USB_CONFIGFS_F_HID=y
-# CONFIG_USB_CONFIGFS_F_LB_SS is not set
-CONFIG_USB_CONFIGFS_F_MIDI=y
-CONFIG_USB_CONFIGFS_F_MTP=y
-# CONFIG_USB_CONFIGFS_F_PRINTER is not set
-CONFIG_USB_CONFIGFS_F_PTP=y
-CONFIG_USB_CONFIGFS_F_QDSS=y
-CONFIG_USB_CONFIGFS_F_SS_MON_GADGET=y
-# CONFIG_USB_CONFIGFS_F_UAC1 is not set
-# CONFIG_USB_CONFIGFS_F_UAC1_LEGACY is not set
-# CONFIG_USB_CONFIGFS_F_UAC2 is not set
-# CONFIG_USB_CONFIGFS_F_UVC is not set
-CONFIG_USB_CONFIGFS_MASS_STORAGE=y
-CONFIG_USB_CONFIGFS_NCM=y
-# CONFIG_USB_CONFIGFS_OBEX is not set
-# CONFIG_USB_CONFIGFS_QCRNDIS is not set
-# CONFIG_USB_CONFIGFS_RMNET_BAM is not set
-# CONFIG_USB_CONFIGFS_RNDIS is not set
-# CONFIG_USB_CONFIGFS_SERIAL is not set
-CONFIG_USB_CONFIGFS_UEVENT=y
-CONFIG_USB_CONFIGFS=y
-# CONFIG_VT is not set
-gabriel@unknown18c04d2e4dbe:~/Área de Trabalho/UbuntoNoTablet$ 
+mkdir -p /tmp/gta4l_recovery_unpack
+cd /tmp/gta4l_recovery_unpack
+
+gzip -dc ~/halium/halium-12-gta4l/out/target/product/gta4l/ramdisk-recovery.img | cpio -idmv
+acct
+apex
+bin
+bt_firmware
+bugreports
+cache
+config
+d
+data
+data_mirror
+debug_ramdisk
+default.prop
+dev
+dsp
+efs
+etc
+firmware
+init
+init.recovery.qcom.rc
+linkerconfig
+metadata
+misc
+mnt
+odm
+odm/app
+odm/bin
+odm/etc
+odm/firmware
+odm/framework
+odm/lib
+odm/lib64
+odm/overlay
+odm/priv-app
+odm/usr
+odm_dlkm
+odm_dlkm/etc
+odm_file_contexts
+odm_property_contexts
+oem
+omr
+plat_file_contexts
+plat_property_contexts
+postinstall
+proc
+product
+product_file_contexts
+product_property_contexts
+prop.default
+res
+res/images
+res/images/erasing_text.png
+res/images/error_text.png
+res/images/fastbootd.png
+res/images/font.png
+res/images/font_menu.png
+res/images/ic_back.png
+res/images/ic_back_sel.png
+res/images/icon_error.png
+res/images/installing_security_text.png
+res/images/installing_text.png
+res/images/logo_image.png
+res/images/loop00000.png
+res/images/loop00001.png
+res/images/loop00002.png
+res/images/loop00003.png
+res/images/no_command_text.png
+res/images/progress_empty.png
+res/images/progress_fill.png
+res/images/stage_empty.png
+res/images/stage_fill.png
+sdcard
+second_stage_resources
+sepolicy
+storage
+sys
+system
+system/bin
+system/bin/[
+system/bin/acpi
+system/bin/adbd
+system/bin/base64
+system/bin/basename
+system/bin/blockdev
+system/bin/bsdtar
+system/bin/busybox
+system/bin/cal
+system/bin/cat
+system/bin/charger
+system/bin/chattr
+system/bin/chcon
+system/bin/chgrp
+system/bin/chmod
+system/bin/chown
+system/bin/chroot
+system/bin/chrt
+system/bin/cksum
+system/bin/clear
+system/bin/cmp
+system/bin/comm
+system/bin/cp
+system/bin/cpio
+system/bin/cut
+system/bin/date
+system/bin/dd
+system/bin/devmem
+system/bin/df
+system/bin/diff
+system/bin/dirname
+system/bin/dmesg
+system/bin/dos2unix
+system/bin/du
+system/bin/e2fsck
+system/bin/e2fsdroid
+system/bin/echo
+system/bin/egrep
+system/bin/env
+system/bin/expand
+system/bin/expr
+system/bin/fallocate
+system/bin/false
+system/bin/fastbootd
+system/bin/fgrep
+system/bin/file
+system/bin/find
+system/bin/flock
+system/bin/fmt
+system/bin/free
+system/bin/fsync
+system/bin/getconf
+system/bin/getenforce
+system/bin/getevent
+system/bin/getprop
+system/bin/gpg
+system/bin/grep
+system/bin/groups
+system/bin/gunzip
+system/bin/gzip
+system/bin/head
+system/bin/hostname
+system/bin/hwclock
+system/bin/i2cdetect
+system/bin/i2cdump
+system/bin/i2cget
+system/bin/i2cset
+system/bin/iconv
+system/bin/id
+system/bin/ifconfig
+system/bin/init
+system/bin/inotifyd
+system/bin/insmod
+system/bin/install
+system/bin/install-system
+system/bin/ionice
+system/bin/iorenice
+system/bin/kill
+system/bin/killall
+system/bin/linker64
+system/bin/linker_asan64
+system/bin/ln
+system/bin/load_policy
+system/bin/log
+system/bin/logname
+system/bin/losetup
+system/bin/ls
+system/bin/lsattr
+system/bin/lsmod
+system/bin/lsof
+system/bin/lspci
+system/bin/lsusb
+system/bin/make_f2fs
+system/bin/md5sum
+system/bin/microcom
+system/bin/minadbd
+system/bin/mkdir
+system/bin/mke2fs
+system/bin/mkfifo
+system/bin/mkfs.ext2
+system/bin/mkfs.ext3
+system/bin/mkfs.ext4
+system/bin/mknod
+system/bin/mkswap
+system/bin/mktemp
+system/bin/modinfo
+system/bin/modprobe
+system/bin/more
+system/bin/mount
+system/bin/mountpoint
+system/bin/mv
+system/bin/nc
+system/bin/netcat
+system/bin/netstat
+system/bin/nice
+system/bin/nl
+system/bin/nohup
+system/bin/nproc
+system/bin/nsenter
+system/bin/od
+system/bin/paste
+system/bin/patch
+system/bin/pgrep
+system/bin/pidof
+system/bin/pkill
+system/bin/pmap
+system/bin/printenv
+system/bin/printf
+system/bin/ps
+system/bin/pwd
+system/bin/readelf
+system/bin/readlink
+system/bin/realpath
+system/bin/reboot
+system/bin/recovery
+system/bin/renice
+system/bin/replace-system
+system/bin/restorecon
+system/bin/rm
+system/bin/rmdir
+system/bin/rmmod
+system/bin/rtcwake
+system/bin/runcon
+system/bin/sed
+system/bin/sendevent
+system/bin/seq
+system/bin/setenforce
+system/bin/setprop
+system/bin/setsid
+system/bin/sh
+system/bin/sha1sum
+system/bin/sha224sum
+system/bin/sha256sum
+system/bin/sha384sum
+system/bin/sha512sum
+system/bin/simg2img
+system/bin/simgtest
+system/bin/sleep
+system/bin/sload_f2fs
+system/bin/sort
+system/bin/split
+system/bin/start
+system/bin/stat
+system/bin/stop
+system/bin/strings
+system/bin/stty
+system/bin/swapoff
+system/bin/swapon
+system/bin/sync
+system/bin/sysctl
+system/bin/system-image-upgrader
+system/bin/tac
+system/bin/tail
+system/bin/tar
+system/bin/taskset
+system/bin/tee
+system/bin/test
+system/bin/time
+system/bin/timeout
+system/bin/toolbox
+system/bin/top
+system/bin/touch
+system/bin/toybox
+system/bin/tr
+system/bin/true
+system/bin/truncate
+system/bin/tty
+system/bin/tune2fs
+system/bin/ueventd
+system/bin/ulimit
+system/bin/umount
+system/bin/uname
+system/bin/uniq
+system/bin/unix2dos
+system/bin/unlink
+system/bin/unshare
+system/bin/unzip
+system/bin/uptime
+system/bin/usleep
+system/bin/uudecode
+system/bin/uuencode
+system/bin/uuidgen
+system/bin/vmstat
+system/bin/watch
+system/bin/watchdogd
+system/bin/wc
+system/bin/which
+system/bin/whoami
+system/bin/xargs
+system/bin/xxd
+system/bin/yes
+system/bin/zcat
+system/bin/zipinfo
+system/bin/ziptool
+system/etc
+system/etc/cgroups.json
+system/etc/init
+system/etc/init/hw
+system/etc/init/hw/init.rc
+system/etc/ld.config.txt
+system/etc/mke2fs.conf
+system/etc/mkshrc
+system/etc/recovery.fstab
+system/etc/security
+system/etc/security/otacerts.zip
+system/etc/system-image
+system/etc/system-image/archive-master.tar.xz
+system/etc/system-image/archive-master.tar.xz.asc
+system/etc/ueventd.rc
+system/lib64
+system/lib64/android.hardware.boot@1.0.so
+system/lib64/android.hardware.boot@1.1.so
+system/lib64/android.hardware.fastboot@1.0.so
+system/lib64/android.hardware.fastboot@1.1.so
+system/lib64/android.hardware.health@1.0.so
+system/lib64/android.hardware.health@2.0.so
+system/lib64/android.hardware.health@2.1.so
+system/lib64/hw
+system/lib64/hw/android.hardware.health@2.0-impl-default.so
+system/lib64/ld-android.so
+system/lib64/libadb_protos.so
+system/lib64/libadbd_auth.so
+system/lib64/libadbd_fs.so
+system/lib64/libasyncio.so
+system/lib64/libbacktrace.so
+system/lib64/libbase.so
+system/lib64/libbootloader_message.so
+system/lib64/libc++.so
+system/lib64/libc.so
+system/lib64/libcgrouprc.so
+system/lib64/libcrypto.so
+system/lib64/libcrypto_utils.so
+system/lib64/libcutils.so
+system/lib64/libdiskconfig.so
+system/lib64/libdl.so
+system/lib64/libext2_blkid.so
+system/lib64/libext2_com_err.so
+system/lib64/libext2_e2p.so
+system/lib64/libext2_misc.so
+system/lib64/libext2_quota.so
+system/lib64/libext2_uuid.so
+system/lib64/libext2fs.so
+system/lib64/libext4_utils.so
+system/lib64/libfec.so
+system/lib64/libfs_mgr.so
+system/lib64/libfusesideload.so
+system/lib64/libgsi.so
+system/lib64/libhidl-gen-utils.so
+system/lib64/libhidlbase.so
+system/lib64/libjsoncpp.so
+system/lib64/libkeyutils.so
+system/lib64/liblog.so
+system/lib64/liblogwrap.so
+system/lib64/liblp.so
+system/lib64/liblz4.so
+system/lib64/liblzma.so
+system/lib64/libm.so
+system/lib64/libpackagelistparser.so
+system/lib64/libpcre2.so
+system/lib64/libpng.so
+system/lib64/libprocessgroup.so
+system/lib64/libprocessgroup_setup.so
+system/lib64/libprotobuf-cpp-lite.so
+system/lib64/librecovery_ui.so
+system/lib64/librecovery_ui_ext.so
+system/lib64/libselinux.so
+system/lib64/libsgdisk.so
+system/lib64/libsparse.so
+system/lib64/libsquashfs_utils.so
+system/lib64/libsysutils.so
+system/lib64/libtinyxml2.so
+system/lib64/libunwindstack.so
+system/lib64/libutils.so
+system/lib64/libvolume_manager.so
+system/lib64/libz.so
+system/lib64/libziparchive.so
+system_ext
+system_ext_file_contexts
+system_ext_property_contexts
+tmp
+vendor
+vendor/firmware
+vendor/firmware/Himax_firmware_djn_jdi.bin
+vendor/firmware/Himax_firmware_hlt_auo.bin
+vendor/firmware/Himax_firmware_inx_fhd.bin
+vendor/firmware/Himax_firmware_lide_hsd.bin
+vendor/firmware/Himax_firmware_tianma_tianma.bin
+vendor/firmware/Himax_firmware_txd_auo.bin
+vendor/firmware/Himax_firmware_txd_auo_al.bin
+vendor/firmware/Himax_firmware_txd_inx.bin
+vendor/firmware/focal_ts_fw_lide_hsd.bin
+vendor/firmware/focal_ts_fw_tianma_tianma.bin
+vendor/firmware/focal_ts_mp_lide_hsd.ini
+vendor/firmware/focal_ts_mp_tianma_tianma.ini
+vendor/firmware/focaltech_ts_fw_lide.bin
+vendor/firmware/novatek_ts_fw_hlt_auo.bin
+vendor/firmware/novatek_ts_fw_lce_panda.bin
+vendor/firmware/novatek_ts_fw_lide_hsd.bin
+vendor/firmware/novatek_ts_fw_txd_inx.bin
+vendor/firmware/novatek_ts_mp_hlt_auo.bin
+vendor/firmware/novatek_ts_mp_lce_panda.bin
+vendor/firmware/novatek_ts_mp_lide_hsd.bin
+vendor/firmware/novatek_ts_mp_txd_inx.bin
+vendor_dlkm
+vendor_dlkm/etc
+vendor_file_contexts
+vendor_property_contexts
+59261 blocos
+gabriel@unknown18c04d2e4dbe:/tmp/gta4l_recovery_unpack$ ls -l init
+ls -l system/bin/init
+file system/bin/init
+lrwxrwxrwx. 1 gabriel gabriel 16 jan  1  1970 init -> /system/bin/init
+-rwxr-xr-x. 1 gabriel gabriel 1967032 jan  1  1970 system/bin/init
+system/bin/init: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /system/bin/linker64, for Android 32, BuildID[md5/uuid]=4d5e4db01de8ad1d1389c638a00db118, stripped
+gabriel@unknown18c04d2e4dbe:/tmp/gta4l_recovery_unpack$ grep -R "BOARD_USES_RECOVERY_AS_BOOT\|RECOVERY_AS_BOOT" \
+device/samsung \
+vendor \
+build \
+-n
+grep: device/samsung: Ficheiro ou pasta inexistente
+grep: build: Ficheiro ou pasta inexistente
+gabriel@unknown18c04d2e4dbe:/tmp/gta4l_recovery_unpack$ grep -R "recovery/root/init" \
+build \
+bootable \
+vendor \
+-n
+grep: build: Ficheiro ou pasta inexistente
+grep: bootable: Ficheiro ou pasta inexistente
+gabriel@unknown18c04d2e4dbe:/tmp/gta4l_recovery_unpack$ 
 

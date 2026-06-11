@@ -1,0 +1,3 @@
+ 1628  heimdall flash   --RECOVERY "/home/gabriel/Área de Trabalho/UbuntoNoTablet/gta4l_backup_20260610_072545/recovery.img"   --no-reboot
+ 1695  heimdall flash --RECOVERY recovery-debug.img --no-reboot
+

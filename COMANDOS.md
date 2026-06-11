@@ -1317,3 +1317,135 @@ A próxima investigação deve concentrar-se exclusivamente no mecanismo de gera
 ```
 
 
+
+
+---
+
+# Atualização de comandos — 2026-06-11
+## 21. Verificação do layout de boot Halium
+
+### Confirmar versão do boot header
+
+```bash
+grep -R "BOARD_BOOT_HEADER_VERSION" device/ samsung/ vendor/ -n
+```
+
+Resultado relevante:
+
+```text
+device/samsung/gta4l-common/BoardConfigCommon.mk:88:BOARD_BOOT_HEADER_VERSION := 2
+```
+
+### Confirmar ausência de fluxo `vendor_boot`
+
+```bash
+grep -R "BOARD_USES_RECOVERY_AS_BOOT" device/ samsung/ vendor/ -n
+grep -R "BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT" device/ samsung/ vendor/ -n
+grep -R "BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT" device/ samsung/ vendor/ -n
+```
+
+Conclusão:
+
+```text
+Não foi encontrado uso de `vendor_boot` para o gta4l.
+```
+
+### Listar artefactos de boot
+
+```bash
+ls -lh out/target/product/gta4l/*boot* out/target/product/gta4l/*.img
+```
+
+Resultados relevantes:
+
+```text
+boot.img                 96M
+ramdisk.img             1.3M
+ramdisk-recovery.img     13M
+dtb.img                 4.0M
+```
+
+## 22. Verificar parâmetros mkbootimg
+
+```bash
+grep -n "BOARD_KERNEL_CMDLINE\|BOARD_KERNEL_BASE\|BOARD_KERNEL_PAGESIZE\|BOARD_MKBOOTIMG_ARGS\|BOARD_KERNEL_OFFSET\|BOARD_RAMDISK_OFFSET\|BOARD_TAGS_OFFSET\|BOARD_DTB_OFFSET"   device/samsung/gta4l-common/BoardConfigCommon.mk
+```
+
+Valores confirmados:
+
+```text
+BOARD_KERNEL_BASE := 0x00000000
+BOARD_KERNEL_OFFSET := 0x00008000
+BOARD_KERNEL_PAGESIZE := 4096
+BOARD_KERNEL_TAGS_OFFSET := 0x01E00000
+BOARD_RAMDISK_OFFSET := 0x020000000
+BOARD_DTB_OFFSET := 0x1F00000
+BOARD_BOOT_HEADER_VERSION := 2
+```
+
+## 23. Verificar ramdisk recovery
+
+```bash
+ls -lh out/target/product/gta4l/kernel
+ls -lh out/target/product/gta4l/ramdisk-recovery.cpio
+file out/target/product/gta4l/ramdisk-recovery.cpio
+file out/target/product/gta4l/ramdisk-recovery.img
+```
+
+Resultados:
+
+```text
+out/target/product/gta4l/kernel: 16M
+out/target/product/gta4l/ramdisk-recovery.cpio: 29M
+out/target/product/gta4l/ramdisk-recovery.cpio: ASCII cpio archive (SVR4 with no CRC)
+out/target/product/gta4l/ramdisk-recovery.img: gzip compressed data
+```
+
+## 24. Gerar boot Halium manual
+
+```bash
+out/host/linux-x86/bin/mkbootimg   --kernel out/target/product/gta4l/kernel   --ramdisk out/target/product/gta4l/ramdisk-recovery.img   --cmdline "console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x4a90000 androidboot.console=ttyMSM0 androidboot.hardware=qcom androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 swiotlb=2048 loop.max_part=7 firmware_class.path=/vendor/firmware_mnt/image"   --base 0x00000000   --pagesize 4096   --kernel_offset 0x00008000   --ramdisk_offset 0x020000000   --tags_offset 0x01E00000   --dtb_offset 0x1F00000   --header_version 2   --dtb out/target/product/gta4l/dtb.img   --output out/target/product/gta4l/halium-boot.img
+```
+
+## 25. Validar boot Halium manual
+
+```bash
+ls -lh out/target/product/gta4l/halium-boot.img
+file out/target/product/gta4l/halium-boot.img
+sha256sum out/target/product/gta4l/halium-boot.img
+```
+
+Resultados:
+
+```text
+halium-boot.img: 32M
+Android bootimg, kernel (0x8000), ramdisk (0x20000000), page size: 4096
+fa4ddd30be54e297d57eb1e761bee7979c1e4c71dbb81600e82d06d836e6838b  out/target/product/gta4l/halium-boot.img
+```
+
+## 26. Extrair e validar conteúdo do ramdisk Halium
+
+```bash
+mkdir -p /tmp/halium_ramdisk_check
+cd /tmp/halium_ramdisk_check
+
+gzip -dc ~/halium/halium-12-gta4l/out/target/product/gta4l/ramdisk-recovery.img | cpio -idmv
+ls
+```
+
+Procurar componentes Ubuntu Touch/Halium:
+
+```bash
+find . -maxdepth 3 -type f | sort | grep -Ei "halium|hybris|ubuntu|init|fstab|rc|system-image"
+
+grep -Rni "halium\|hybris\|ubuntu\|system-image\|telnet\|ssh" . | head -80
+```
+
+Resultados relevantes:
+
+```text
+./system/bin/system-image-upgrader
+./system/bin/install-system
+./system/etc/system-image
+./system/etc/init/hw/init.rc: setprop ro.ubuntu.recovery true
+```

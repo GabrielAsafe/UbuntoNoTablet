@@ -232,3 +232,26 @@ O layout de partições é compatível com a estratégia Halium 12 usando super/
 Não existe vendor_boot, o que simplifica a etapa inicial de boot.
 Atenção máxima continua necessária para efs, sec_efs, modemst1, modemst2 e persist.
 ```
+
+
+---
+
+# Atualização — 2026-06-11
+## Impacto do layout de partições no boot Halium
+
+A ausência de `vendor_boot` foi confirmada como relevante para o fluxo final.
+
+Como o dispositivo usa `BOARD_BOOT_HEADER_VERSION := 2`, o boot Halium foi criado como imagem clássica para a partição `boot`:
+
+```text
+kernel + ramdisk-recovery.img + dtb.img -> halium-boot.img
+```
+
+Artefacto:
+
+```text
+out/target/product/gta4l/halium-boot.img
+SHA256: fa4ddd30be54e297d57eb1e761bee7979c1e4c71dbb81600e82d06d836e6838b
+```
+
+A próxima fase envolve teste/flash controlado. A partição alvo provável para o primeiro teste é `boot`, mas nenhum comando de escrita deve ser executado sem reconfirmar backup, hash, método de restauração e comando exato.

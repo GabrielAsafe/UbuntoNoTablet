@@ -821,3 +821,148 @@ Decisão:
 ```text
 Criar uma árvore limpa em ~/halium/halium-12-gta4l e usar cópias locais das árvores device/common/kernel.
 ```
+
+
+---
+
+# Atualização de progresso — 2026-06-11
+## Geração manual do boot Halium final
+
+Foi concluída a investigação do fluxo de boot para Halium 12 no SM-T505 / `gta4l`.
+
+Conclusões confirmadas:
+
+```text
+A árvore não possui target `halium-boot`.
+O dispositivo usa BOARD_BOOT_HEADER_VERSION := 2.
+Não existe partição `vendor_boot`.
+O fluxo correto é boot image clássico: kernel + ramdisk + dtb.
+```
+
+Artefactos usados:
+
+```text
+out/target/product/gta4l/kernel
+out/target/product/gta4l/ramdisk-recovery.img
+out/target/product/gta4l/dtb.img
+```
+
+O `ramdisk-recovery.cpio` foi identificado como cpio ASCII cru:
+
+```text
+out/target/product/gta4l/ramdisk-recovery.cpio: ASCII cpio archive (SVR4 with no CRC)
+```
+
+O `ramdisk-recovery.img` foi identificado como gzip comprimido:
+
+```text
+out/target/product/gta4l/ramdisk-recovery.img: gzip compressed data
+```
+
+Portanto, o ficheiro correto para passar ao `mkbootimg` é:
+
+```text
+out/target/product/gta4l/ramdisk-recovery.img
+```
+
+não o `.cpio` cru.
+
+## Comando usado para gerar `halium-boot.img`
+
+```bash
+out/host/linux-x86/bin/mkbootimg   --kernel out/target/product/gta4l/kernel   --ramdisk out/target/product/gta4l/ramdisk-recovery.img   --cmdline "console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x4a90000 androidboot.console=ttyMSM0 androidboot.hardware=qcom androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 swiotlb=2048 loop.max_part=7 firmware_class.path=/vendor/firmware_mnt/image"   --base 0x00000000   --pagesize 4096   --kernel_offset 0x00008000   --ramdisk_offset 0x020000000   --tags_offset 0x01E00000   --dtb_offset 0x1F00000   --header_version 2   --dtb out/target/product/gta4l/dtb.img   --output out/target/product/gta4l/halium-boot.img
+```
+
+## Resultado final
+
+Foi criado:
+
+```text
+out/target/product/gta4l/halium-boot.img
+```
+
+Tamanho observado:
+
+```text
+32 MB
+```
+
+SHA256:
+
+```text
+fa4ddd30be54e297d57eb1e761bee7979c1e4c71dbb81600e82d06d836e6838b  out/target/product/gta4l/halium-boot.img
+```
+
+Validação com `file`:
+
+```text
+Android bootimg, kernel (0x8000), ramdisk (0x20000000), page size: 4096
+```
+
+## Validação do ramdisk
+
+O ramdisk foi extraído com:
+
+```bash
+mkdir -p /tmp/halium_ramdisk_check
+cd /tmp/halium_ramdisk_check
+gzip -dc ~/halium/halium-12-gta4l/out/target/product/gta4l/ramdisk-recovery.img | cpio -idmv
+```
+
+Foram encontrados componentes Ubuntu Touch / Halium:
+
+```text
+system/bin/system-image-upgrader
+system/bin/install-system
+system/etc/system-image/
+system/etc/init/hw/init.rc
+```
+
+Trechos relevantes encontrados:
+
+```text
+setprop ro.ubuntu.recovery true
+System Image Upgrader for Ubuntu Touch
+halium-install
+ubuntu.img
+/data/ubuntu
+/var/lib/lxc/android
+```
+
+Conclusão:
+
+```text
+O `ramdisk-recovery.img` gerado pelo alvo `recoveryramdisk` contém infraestrutura Ubuntu Touch/Halium.
+O `halium-boot.img` manual é o equivalente funcional ao target ausente `halium-boot` nesta árvore.
+```
+
+## Estado após esta atualização
+
+| Item | Estado |
+|---|---|
+| `mka bootimage` | concluído |
+| `mka recoveryramdisk` | concluído |
+| `mka halium-boot` | inexistente / unknown target |
+| `ramdisk-recovery.img` | gerado e validado |
+| `halium-boot.img` manual | criado |
+| SHA256 do `halium-boot.img` | registado |
+| Validação de conteúdo Ubuntu Touch/Halium | concluída |
+| Primeiro boot real no dispositivo | próxima fase |
+
+## Próxima fase
+
+A próxima etapa do projeto passa a ser:
+
+```text
+Primeiro boot Halium / Ubuntu Touch no SM-T505
+```
+
+Antes de qualquer flash, preservar a regra de segurança:
+
+```text
+1. confirmar backup existente;
+2. confirmar hash SHA256;
+3. confirmar método de restauração;
+4. confirmar comando exato;
+5. confirmar partição alvo correta.
+```

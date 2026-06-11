@@ -1,398 +1,363 @@
-Perfeito. O resultado mais importante é:
+# CHECKPOINT — Port Halium 12 / Ubuntu Touch para Samsung Galaxy Tab A7 LTE SM-T505 (gta4l)
+
+## Estado funcional confirmado
 
 ```text
-#### build completed successfully ####
+✓ Android arranca normalmente
+✓ Recovery Samsung original arranca normalmente
+✓ Kernel compila
+✓ Android build compila
+✓ Recovery build compila
+✓ Ramdisk recovery compila
+✓ Heimdall funciona
+✓ AVB funciona
+✓ PIT obtido
+✓ BOOT pode ser flashado
+✓ RECOVERY pode ser flashado
+✓ recovery-debug.img pode ser construído e assinado
 ```
 
-e foram gerados:
+## Estado não funcional
 
 ```text
-out/target/product/gta4l/ramdisk-recovery.cpio
-out/target/product/gta4l/ramdisk-recovery.img
+✗ halium-boot não arranca
+✗ recovery Halium não arranca
+✗ recovery-debug não arranca
+✗ ADB nunca aparece
+✗ UI recovery nunca aparece
+✗ Ubuntu Touch installer nunca aparece
 ```
 
-Além disso:
+---
+
+# Comportamento observado
+
+## halium-boot-avb.img
 
 ```text
-mka halium-boot
-FAILED: ninja: unknown target 'halium-boot'
+Samsung logo
+"This tablet is not running Samsung's official software"
+Galaxy Tab A7
+Powered by Android
+
+↓
+fica preso indefinidamente
 ```
 
-Portanto a árvore **não possui target halium-boot**. 
-
-Isto muda completamente a investigação.
-
-# ESTADO ATUAL PARA GUARDAR
-
-## Projeto
-
-Port Ubuntu Touch / Halium 12
-
-Dispositivo:
+## recovery.img Halium
 
 ```text
-Samsung Galaxy Tab A7 LTE
-SM-T505
-Codename: gta4l
-SoC: Qualcomm SM6115 (Bengal)
+Samsung logo
+
+↓
+fica preso indefinidamente
 ```
 
-## Ambiente
+## recovery-debug.img
+
+Mesma modificação:
 
 ```text
-Fedora 43
-```
-
-Árvore:
-
-```text
-~/halium/halium-12-gta4l
-```
-
-Build:
-
-```text
-lineage_gta4l-userdebug
-```
-
-## Build Android normal
-
-Compila com sucesso:
-
-```bash
-mka bootimage
+- adbd forçado
+- class core adicionada
+- start adbd manual
+- sys.usb.config=adb
+- console shell ativada
+- tentativa de arranque em early-init
 ```
 
 Resultado:
 
 ```text
-out/target/product/gta4l/boot.img
+Samsung logo
+
+↓
+fica preso exatamente igual
 ```
+
+Nenhuma alteração observável.
+
+---
+
+# O que foi definitivamente descartado
+
+## Flashing
+
+```text
+✓ Heimdall
+✓ PIT
+✓ RECOVERY partition
+✓ BOOT partition
+```
+
+## Segurança
+
+```text
+✓ AVB
+✓ assinatura AVB recovery
+✓ bootloader aceita imagens
+✓ CURRENT BINARY: Custom
+```
+
+## Configuração Android
+
+```text
+✓ SELinux permissive
+✓ enforcing=0
+✓ ro.boot.bootdevice
+✓ androidboot.hardware=qcom
+```
+
+## Construção recovery
+
+```text
+✓ kernel incluído
+✓ dtb incluído
+✓ recovery_dtbo incluído
+✓ header_version=2
+✓ board=SRPTC24A004
+✓ pagesize=4096
+✓ offsets corretos
+```
+
+---
+
+# Descobertas importantes
+
+## Cmdline real do recovery
+
+```text
+console=ttyMSM0,115200n8
+earlycon=msm_geni_serial,0x4a90000
+androidboot.console=ttyMSM0
+androidboot.hardware=qcom
+androidboot.memcg=1
+androidboot.selinux=permissive
+enforcing=0
+buildvariant=userdebug
+```
+
+Portanto:
+
+```text
+✓ ro.hardware=qcom está correto
+```
+
+A hipótese:
+
+```text
+import /init.recovery.${ro.hardware}.rc
+```
+
+falhar por hardware incorreto foi descartada.
+
+---
+
+## Conteúdo do ramdisk
+
+Confirmado:
+
+```text
+✓ /system/bin/init
+✓ /system/bin/recovery
+✓ /system/bin/adbd
+✓ fastbootd
+✓ recovery.fstab
+✓ init.recovery.qcom.rc
+✓ recovery UI resources
+✓ Ubuntu Touch recovery files
+```
+
+Portanto:
+
+```text
+ramdisk não está vazio
+ramdisk não está incompleto
+```
+
+---
+
+## init.rc
+
+Primeira linha:
+
+```rc
+import /init.recovery.${ro.hardware}.rc
+```
+
+Serviços encontrados:
+
+```rc
+service recovery /system/bin/recovery
+service adbd /system/bin/adbd
+service fastbootd /system/bin/fastbootd
+```
+
+ADB existe.
+
+Recovery existe.
+
+UI existe.
+
+---
+
+# Teste recovery-debug
+
+Foram feitas alterações para forçar:
+
+```text
+ADB
+console shell
+class core
+early-init
+```
+
+Resultado:
+
+```text
+nenhuma diferença observável
+```
+
+Isto sugere fortemente:
+
+```text
+o sistema não chega a executar
+os blocos relevantes do init.rc
+```
+
+ou
+
+```text
+o bloqueio ocorre antes do userspace recovery funcionar
+```
+
+---
+
+# Recovery debug construído
 
 SHA256:
 
 ```text
-39e67af96b015ec689ae86e504c6cf20acb9e589fe33b430c6ec2849ed77d278
+recovery-debug.img
+9ba71e36601640ab6cadd49b1d5492902a56b2e8ca4a87d753758beacc073ddd
 ```
 
-Boot original Samsung:
+Recovery original:
 
 ```text
-9aa9da7cebd98bbf376dd57f2cbe897f232a361f54ba18d5cfcb8ce8ea0dc5ab
+0b275e078bcd1a1f2145ed4a8e95e9998a777fd7a21e835f4bd7a44eed4be52a
 ```
 
-## Descoberta crítica
-
-O boot gerado inicialmente era Android normal:
-
-Conteúdo:
+Logo:
 
 ```text
-init
-fstab.emmc
+✓ imagens diferentes
+✓ modificações realmente aplicadas
 ```
 
-Não era:
+---
+
+# Logs persistentes
+
+Tentativa:
 
 ```text
-halium-boot
-hybris-boot
+CONFIG_PSTORE
+ramoops
+pstore
 ```
 
-## Aplicação dos patches Halium
-
-Executado:
-
-```bash
-bash hybris-patches/apply-patches.sh
-```
-
-Aplicados patches em:
+Resultado:
 
 ```text
-bionic
-build
-frameworks
-hardware
-system
-external
+nenhuma evidência encontrada
 ```
 
-incluindo:
+Neste momento não existe mecanismo conhecido para recolher logs persistentes.
+
+---
+
+# Hipótese principal atual
+
+A hipótese mais forte neste momento é:
 
 ```text
-binderfs
-hybris
-libhybris support
-init modifications
-servicemanager
+Kernel assume controlo.
+
+↓
+
+Problema ocorre antes do userspace recovery ficar funcional.
+
+↓
+
+ADB nunca sobe.
+Recovery nunca sobe.
+UI nunca sobe.
+
+↓
+
+Bloqueio muito cedo no arranque.
 ```
 
-## Investigação recoveryramdisk
+---
 
-Descoberto:
+# Próxima investigação
 
-```bash
-mka recoveryramdisk
-```
-
-existia e compilava.
-
-Foram encontrados vários erros SELinux recovery.
-
-### Correções Lineage
-
-Neutralizados:
+Prioridade máxima:
 
 ```text
-device/lineage/sepolicy/qcom/dynamic/hal_lineage_livedisplay_qti.te
-device/lineage/sepolicy/qcom/dynamic/hal_lineage_livedisplay_sysfs.te
-device/lineage/sepolicy/qcom/vendor/fsck.te
-device/lineage/sepolicy/qcom/vendor/hal_lineage_health_default.te
-device/lineage/sepolicy/qcom/vendor/hal_lineage_livedisplay_qti.te
+Comparar recovery stock Samsung
+vs
+recovery Halium
 ```
 
 Objetivo:
 
 ```text
-permitir compilação recovery policy
+extrair recovery.img stock
+
+comparar:
+
+- kernel
+- dtb
+- dtbo
+- cmdline
+- header
+- offsets
+- pagesize
+- board
 ```
 
-### Correções Samsung recovery policy
-
-Criado:
+e determinar:
 
 ```text
-device/samsung/gta4l-common/sepolicy/vendor/halium_recovery_types.te
-```
-
-Adicionados tipos mínimos recovery:
-
-```te
-type vendor_sysfs_battery_supply, sysfs_type, fs_type;
-type vendor_sysfs_graphics, sysfs_type, fs_type;
-type vendor_sysfs_mmc_host, sysfs_type, fs_type;
-type vendor_sysfs_usb_supply, sysfs_type, fs_type;
-
-type firmware_file, fs_type;
-type bt_firmware_file, fs_type;
-
-type vendor_hal_gnss_qti, domain;
-type vendor_qti_init_shell, domain;
-type vendor_time_daemon, domain;
-type vendor_timeservice_app, domain;
-type vendor_wcnss_service, domain;
-```
-
-Foram removidas definições duplicadas de propriedades:
-
-```text
-vendor_qseecomd_prop
-vendor_vaultkeeperd_prop
-vendor_wt_rpmb_status_prop
-```
-
-porque já existiam em:
-
-```text
-device/samsung/gta4l-common/sepolicy/vendor/property.te
-```
-
-## Resultado final recovery
-
-Build concluído:
-
-```text
-#### build completed successfully ####
-```
-
-Gerados:
-
-```text
-out/target/product/gta4l/ramdisk-recovery.cpio
-```
-
-Tamanho:
-
-```text
-29 MB
-```
-
-Gerado:
-
-```text
-out/target/product/gta4l/ramdisk-recovery.img
-```
-
-Tamanho:
-
-```text
-13 MB
-```
-
-Também existe:
-
-```text
-out/target/product/gta4l/recovery/root/
-```
-
-contendo:
-
-```text
-init.recovery.qcom.rc
-sepolicy
-vendor_file_contexts
-vendor_property_contexts
-plat_file_contexts
-...
-```
-
-## Estado atual da investigação
-
-Confirmado:
-
-```text
-mka halium-boot
-```
-
-retorna:
-
-```text
-ninja: unknown target 'halium-boot'
-```
-
-Logo:
-
-```text
-Esta árvore Halium 12 NÃO possui target halium-boot.
-```
-
-Temos:
-
-```text
-boot.img
-ramdisk-recovery.img
-ramdisk-recovery.cpio
-```
-
-mas ainda não existe:
-
-```text
-hybris-boot.img
-halium-boot.img
+se o problema está no kernel/dtb/dtbo
+ou no userspace Halium
 ```
 
 ---
 
-# PROMPT PARA CONTINUAR EXATAMENTE DESTE PONTO
-
-# CONTINUAÇÃO EXATA DO PORT HALIUM 12 - SAMSUNG GALAXY TAB A7 LTE (SM-T505 / GTA4L)
-
-Lê tudo antes de responder.
-
-Não repetir investigação já feita.
-
-Não sugerir voltar a compilar boot.img Android normal.
-
-## Objetivo
-
-Descobrir como gerar o boot Halium final (hybris-boot / halium-boot equivalente) para Ubuntu Touch.
-
-## Estado confirmado
-
-Build Android:
-
-```bash
-mka bootimage
-```
-
-funciona.
-
-Resultado:
+# Estado resumido
 
 ```text
-out/target/product/gta4l/boot.img
+Já não parece ser:
+
+- Heimdall
+- AVB
+- PIT
+- recovery partition
+- boot partition
+- SELinux
+- bootdevice
+- adbd desativado
+- init.rc incompleto
+
+O foco passou para:
+
+kernel
+dtb
+dtbo
+boot chain Samsung
+arranque muito precoce antes do recovery userspace
 ```
-
-Build recovery:
-
-```bash
-mka recoveryramdisk
-```
-
-funciona.
-
-Resultado:
-
-```text
-out/target/product/gta4l/ramdisk-recovery.img
-out/target/product/gta4l/ramdisk-recovery.cpio
-```
-
-## Factos confirmados
-
-O boot Android original gerado contém:
-
-```text
-init
-fstab.emmc
-```
-
-e NÃO é Halium.
-
-Os patches Halium foram aplicados através de:
-
-```bash
-bash hybris-patches/apply-patches.sh
-```
-
-Build recovery concluído com sucesso.
-
-## Descoberta crítica
-
-Executado:
-
-```bash
-mka halium-boot
-```
-
-Resultado:
-
-```text
-ninja: unknown target 'halium-boot'
-```
-
-Logo:
-
-```text
-não existe target halium-boot nesta árvore
-```
-
-## Artefactos existentes
-
-```text
-out/target/product/gta4l/boot.img
-out/target/product/gta4l/ramdisk.img
-out/target/product/gta4l/ramdisk-recovery.img
-out/target/product/gta4l/ramdisk-recovery.cpio
-```
-
-## Próxima investigação
-
-Descobrir:
-
-1. Como Halium 12 espera criar o boot final quando não existe target `halium-boot`.
-2. Se `ramdisk-recovery.img` deve ser empacotado manualmente com o kernel.
-3. Se existe outro target escondido:
-
-   * hybris-boot
-   * recoveryimage
-   * vendorbootimage
-   * bootimage ramdisk substitution
-4. Qual é o fluxo correto usado pelos ports Halium 12 recentes para dispositivos Android 12.
-
-Não repetir correções SELinux já concluídas.
-Começar a investigação exatamente a partir deste estado.
-
-Isto deixa registado todo o progresso relevante e permite retomar sem perder contexto.
 
