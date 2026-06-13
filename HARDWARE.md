@@ -301,3 +301,19 @@ SHA256: fa4ddd30be54e297d57eb1e761bee7979c1e4c71dbb81600e82d06d836e6838b
 ```
 
 O ramdisk contém componentes Ubuntu Touch/Halium, incluindo `system-image-upgrader`, `install-system` e `ro.ubuntu.recovery=true`.
+
+
+---
+
+# Atualização — 2026-06-13 — Observações de recovery/boot
+
+O kernel/dtb/recovery_dtbo stock foram isolados e testados em imagens híbridas. O híbrido com estes componentes stock e ramdisk Halium alterou o comportamento visual do boot, mas ainda travou no logo Samsung.
+
+Conclusão para hardware/kernel:
+
+```text
+Baixa probabilidade de o kernel, DTB ou recovery_dtbo stock serem o problema principal do travamento do recovery Halium.
+Alta probabilidade de haver incompatibilidade no ramdisk/userspace Halium e/ou no método de repack/assinatura da imagem recovery.
+```
+
+USB enumerou uma vez como Samsung SM6150 (`04e8:685d`) durante uma tentativa, mas não manteve ADB.

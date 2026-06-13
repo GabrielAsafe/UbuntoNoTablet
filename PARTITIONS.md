@@ -255,3 +255,30 @@ SHA256: fa4ddd30be54e297d57eb1e761bee7979c1e4c71dbb81600e82d06d836e6838b
 ```
 
 A próxima fase envolve teste/flash controlado. A partição alvo provável para o primeiro teste é `boot`, mas nenhum comando de escrita deve ser executado sem reconfirmar backup, hash, método de restauração e comando exato.
+
+
+---
+
+# Atualização — 2026-06-13 — Recovery e AVB
+
+A partição `recovery` foi testada várias vezes via Heimdall e restaurada com sucesso usando a imagem original do backup.
+
+Comando de restauração seguro usado:
+
+```bash
+cd ~/halium/test_recovery_compare
+
+heimdall flash \
+  --RECOVERY "/home/gabriel/Área de Trabalho/UbuntoNoTablet/gta4l_backup_20260610_072545/recovery.img" \
+  --no-reboot
+```
+
+Estado confirmado:
+
+```text
+recovery original funciona
+recovery repack limpo causou bootloop
+restauração do recovery original recuperou o dispositivo
+```
+
+A partição `recovery` deve continuar tratada como crítica. Não testar imagens reconstruídas sem resolver a equivalência AVB/assinatura.

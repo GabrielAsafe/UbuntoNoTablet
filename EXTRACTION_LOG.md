@@ -525,3 +525,41 @@ fa4ddd30be54e297d57eb1e761bee7979c1e4c71dbb81600e82d06d836e6838b
 ```
 
 Isto não altera a extração da `super.img`; apenas fecha a etapa de geração do boot Halium inicial.
+
+
+---
+
+# Atualização — 2026-06-13 — Extração de recovery ramdisk
+
+O ramdisk do recovery stock foi extraído com:
+
+```bash
+cd ~/halium/test_recovery_compare
+
+mkdir -p stock_ramdisk_extract
+
+cd stock_ramdisk_extract
+
+gzip -dc ../stock_recovery/ramdisk | cpio -idmv
+```
+
+O recovery stock contém uma estrutura mais completa do que o ramdisk Halium, incluindo:
+
+```text
+apex
+bootstrap-apex
+debug_ramdisk
+second_stage_resources
+system/bin/init
+system/bin/adbd
+system/bin/servicemanager
+system/etc/init/servicemanager.recovery.rc
+system/etc/init/init.qcom.recovery.rc
+system/etc/init/android.hardware.health-service.samsung-recovery.rc
+```
+
+Conclusão:
+
+```text
+O recovery stock moderno contém componentes de userspace/first-stage/recovery que não estão equivalentes no ramdisk Halium 12.
+```

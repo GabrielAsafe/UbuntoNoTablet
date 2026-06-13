@@ -1449,3 +1449,289 @@ Resultados relevantes:
 ./system/etc/system-image
 ./system/etc/init/hw/init.rc: setprop ro.ubuntu.recovery true
 ```
+
+
+---
+
+# Comandos executados — 2026-06-13 — Investigação recovery/repack
+
+## Preparar diretório de comparação
+
+```bash
+cd ~/halium
+
+mkdir -p test_recovery_compare
+
+cd test_recovery_compare
+
+cp "$HOME/Área de Trabalho/UbuntoNoTablet/gta4l_backup_20260610_072545/recovery.img" recovery-stock.img
+
+cp "$HOME/halium/halium-12-gta4l/recovery-debug.img" recovery-debug.img
+
+cp "$HOME/Área de Trabalho/UbuntoNoTablet/gta4l_backup_20260610_072545/boot.img" boot-stock.img
+
+cp "$HOME/halium/halium-12-gta4l/out/target/product/gta4l/boot.img" boot-halium.img 2>/dev/null || true
+```
+
+## Desempacotar imagens
+
+```bash
+cd ~/halium/test_recovery_compare
+
+mkdir -p stock_recovery debug_recovery stock_boot halium_boot
+
+unpack_bootimg --boot_img recovery-stock.img --out stock_recovery
+
+unpack_bootimg --boot_img recovery-debug.img --out debug_recovery
+
+unpack_bootimg --boot_img boot-stock.img --out stock_boot
+
+if [ -f boot-halium.img ]; then
+  unpack_bootimg --boot_img boot-halium.img --out halium_boot
+fi
+```
+
+## Gerar hashes dos componentes
+
+```bash
+cd ~/halium/test_recovery_compare
+
+for d in stock_recovery debug_recovery stock_boot halium_boot; do
+  echo "===== $d ====="
+  find "$d" -maxdepth 1 -type f -exec sha256sum {} \; 2>/dev/null | sort
+done > component_hashes.txt
+
+cat component_hashes.txt
+```
+
+## Obter comando mkbootimg do stock
+
+```bash
+cd ~/halium/test_recovery_compare
+
+unpack_bootimg --boot_img recovery-stock.img --format mkbootimg > stock_mkbootimg.txt
+
+cat stock_mkbootimg.txt
+```
+
+## Criar recovery híbrido com parâmetros stock
+
+```bash
+cd ~/halium/test_recovery_compare
+
+mkbootimg \
+  --header_version 2 \
+  --os_version 16.0.0 \
+  --os_patch_level 2026-03 \
+  --kernel stock_recovery/kernel \
+  --ramdisk debug_recovery/ramdisk \
+  --recovery_dtbo stock_recovery/recovery_dtbo \
+  --dtb stock_recovery/dtb \
+  --pagesize 4096 \
+  --base 0x00000000 \
+  --kernel_offset 0x00008000 \
+  --ramdisk_offset 0x20000000 \
+  --second_offset 0x00000000 \
+  --tags_offset 0x01e00000 \
+  --dtb_offset 0x01f00000 \
+  --board SRPTC24A004 \
+  --cmdline "console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x4a90000 androidboot.console=ttyMSM0 androidboot.hardware=qcom androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 swiotlb=2048 loop.max_part=7 firmware_class.path=/vendor/firmware_mnt/image" \
+  -o recovery-hybrid-stockparams.img
+
+cp recovery-hybrid-stockparams.img recovery-hybrid-stockparams-avb.img
+
+avbtool add_hash_footer \
+  --image recovery-hybrid-stockparams-avb.img \
+  --partition_name recovery \
+  --partition_size 103546880
+```
+
+## Flash do recovery híbrido
+
+```bash
+cd ~/halium/test_recovery_compare
+
+heimdall flash \
+  --RECOVERY recovery-hybrid-stockparams-avb.img \
+  --no-reboot
+```
+
+## Extrair ramdisk stock e comparar com Halium
+
+```bash
+cd ~/halium/test_recovery_compare
+
+mkdir -p stock_ramdisk_extract
+
+cd stock_ramdisk_extract
+
+gzip -dc ../stock_recovery/ramdisk | cpio -idmv
+
+cd ~/halium
+
+diff -ruN \
+  test_recovery_compare/stock_ramdisk_extract \
+  halium-12-gta4l/ramdisk_recovery_dump \
+  > recovery_ramdisk.diff
+
+grep -n "binderfs" recovery_ramdisk.diff
+
+grep -n "servicemanager" recovery_ramdisk.diff
+
+grep -n "class_start hal" recovery_ramdisk.diff
+
+grep -n "init.qcom.recovery.rc" recovery_ramdisk.diff
+
+grep -n "android.hardware.health-service.samsung-recovery" recovery_ramdisk.diff
+```
+
+## Criar stock-debug com ADB forçado
+
+```bash
+cd ~/halium/test_recovery_compare
+
+rm -rf stock_ramdisk_adb1
+
+cp -a stock_ramdisk_extract stock_ramdisk_adb1
+
+cp stock_ramdisk_adb1/default.prop stock_ramdisk_adb1/default.prop.bak.adb1
+
+cp stock_ramdisk_adb1/prop.default stock_ramdisk_adb1/prop.default.bak.adb1
+
+cp stock_ramdisk_adb1/system/etc/init/hw/init.rc stock_ramdisk_adb1/system/etc/init/hw/init.rc.bak.adb1
+
+python3 - <<'PY'
+from pathlib import Path
+
+for name in ["default.prop", "prop.default"]:
+    p = Path("stock_ramdisk_adb1") / name
+    s = p.read_text()
+    s = s.replace("ro.debuggable=0", "ro.debuggable=1")
+    s = s.replace("ro.force.debuggable=0", "ro.force.debuggable=1")
+    s = s.replace("ro.adb.secure=1", "ro.adb.secure=0")
+    if "persist.sys.usb.config=adb\n" not in s:
+        s += "\npersist.sys.usb.config=adb\n"
+    p.write_text(s)
+
+p = Path("stock_ramdisk_adb1/system/etc/init/hw/init.rc")
+s = p.read_text()
+
+if "    setprop service.adb.root 1\n" not in s:
+    s = s.replace(
+        "on boot\n    ifup lo\n    hostname localhost\n    domainname localdomain\n",
+        "on boot\n    ifup lo\n    hostname localhost\n    domainname localdomain\n\n    setprop service.adb.root 1\n    setprop sys.usb.config adb\n    start adbd\n"
+    )
+
+p.write_text(s)
+PY
+
+cd stock_ramdisk_adb1
+
+find . | cpio -o -H newc | gzip > ../ramdisk-stock-adb1.img
+
+cd ..
+
+mkbootimg \
+  --header_version 2 \
+  --os_version 16.0.0 \
+  --os_patch_level 2026-03 \
+  --kernel stock_recovery/kernel \
+  --ramdisk ramdisk-stock-adb1.img \
+  --recovery_dtbo stock_recovery/recovery_dtbo \
+  --dtb stock_recovery/dtb \
+  --pagesize 4096 \
+  --base 0x00000000 \
+  --kernel_offset 0x00008000 \
+  --ramdisk_offset 0x20000000 \
+  --second_offset 0x00000000 \
+  --tags_offset 0x01e00000 \
+  --dtb_offset 0x01f00000 \
+  --board SRPTC24A004 \
+  --cmdline "console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x4a90000 androidboot.console=ttyMSM0 androidboot.hardware=qcom androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 swiotlb=2048 loop.max_part=7 firmware_class.path=/vendor/firmware_mnt/image" \
+  -o recovery-stock-adb1.img
+
+cp recovery-stock-adb1.img recovery-stock-adb1-avb.img
+
+avbtool add_hash_footer \
+  --image recovery-stock-adb1-avb.img \
+  --partition_name recovery \
+  --partition_size 103546880
+```
+
+## Flash do stock-debug ADB
+
+```bash
+cd ~/halium/test_recovery_compare
+
+heimdall flash \
+  --RECOVERY recovery-stock-adb1-avb.img \
+  --no-reboot
+```
+
+## Teste clean repack do stock
+
+```bash
+cd ~/halium/test_recovery_compare
+
+rm -rf stock_ramdisk_repack_clean
+
+cp -a stock_ramdisk_extract stock_ramdisk_repack_clean
+
+cd stock_ramdisk_repack_clean
+
+find . | cpio -o -H newc | gzip > ../ramdisk-stock-clean-repack.img
+
+cd ..
+
+mkbootimg \
+  --header_version 2 \
+  --os_version 16.0.0 \
+  --os_patch_level 2026-03 \
+  --kernel stock_recovery/kernel \
+  --ramdisk ramdisk-stock-clean-repack.img \
+  --recovery_dtbo stock_recovery/recovery_dtbo \
+  --dtb stock_recovery/dtb \
+  --pagesize 4096 \
+  --base 0x00000000 \
+  --kernel_offset 0x00008000 \
+  --ramdisk_offset 0x20000000 \
+  --second_offset 0x00000000 \
+  --tags_offset 0x01e00000 \
+  --dtb_offset 0x01f00000 \
+  --board SRPTC24A004 \
+  --cmdline "console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x4a90000 androidboot.console=ttyMSM0 androidboot.hardware=qcom androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 swiotlb=2048 loop.max_part=7 firmware_class.path=/vendor/firmware_mnt/image" \
+  -o recovery-stock-clean-repack.img
+
+cp recovery-stock-clean-repack.img recovery-stock-clean-repack-avb.img
+
+avbtool add_hash_footer \
+  --image recovery-stock-clean-repack-avb.img \
+  --partition_name recovery \
+  --partition_size 103546880
+
+heimdall flash \
+  --RECOVERY recovery-stock-clean-repack-avb.img \
+  --no-reboot
+```
+
+## Restaurar recovery original
+
+```bash
+cd ~/halium/test_recovery_compare
+
+heimdall flash \
+  --RECOVERY "/home/gabriel/Área de Trabalho/UbuntoNoTablet/gta4l_backup_20260610_072545/recovery.img" \
+  --no-reboot
+```
+
+## Verificar AVB do recovery stock
+
+```bash
+cd ~/halium/test_recovery_compare
+
+avbtool info_image --image recovery-stock.img
+
+avbtool verify_image --image recovery-stock.img
+
+avbtool verify_image --image recovery-stock.img --follow_chain_partitions
+```

@@ -966,3 +966,363 @@ Antes de qualquer flash, preservar a regra de segurança:
 4. confirmar comando exato;
 5. confirmar partição alvo correta.
 ```
+
+
+---
+
+# Atualização — 2026-06-13 — Investigação recovery, AVB e repack
+
+## Objetivo da sessão
+
+Investigar por que `halium-boot`, `recovery Halium` e `recovery-debug` ficavam presos no logo Samsung, evitando novos testes de flash do sistema e concentrando a análise no recovery.
+
+## Estado seguro no fim da sessão
+
+```text
+✓ Recovery original restaurado
+✓ Sistema voltou a funcionar
+✓ Tablet recuperado de bootloop
+✓ Nenhuma alteração permanente deixada como estado final
+```
+
+## Estrutura de trabalho usada
+
+Diretórios relevantes:
+
+```text
+~/halium/test_recovery_compare
+~/halium/halium-12-gta4l
+~/Área de Trabalho/UbuntoNoTablet/gta4l_backup_20260610_072545
+```
+
+Imagens principais usadas:
+
+```text
+recovery-stock.img
+recovery-debug.img
+boot-stock.img
+boot-halium.img
+```
+
+## Comparação inicial stock vs Halium/debug
+
+Foi confirmado que o recovery stock e o boot stock usam o mesmo kernel:
+
+```text
+stock_recovery/kernel == stock_boot/kernel
+SHA256: 442492b2f846a5ff664647da2660105e55f6a8a73331a4d3ba1a6a353ade9fdb
+```
+
+Também foi confirmado que `recovery-debug` e `halium_boot` usam o mesmo kernel Halium, diferente do stock:
+
+```text
+debug_recovery/kernel == halium_boot/kernel
+SHA256: 7b7f40bb85...
+```
+
+O DTB e o recovery DTBO também diferiam entre stock e Halium:
+
+```text
+stock dtb:          86ce145276a684dcaf05470c92074db745cab2b2e19b9c1ad57678a267bfda6a
+halium/debug dtb:   57ddc81bd0...
+
+stock recovery_dtbo:        4f152da82efc83b73156768e459c4f546a535df3dc3e55676d9dd062081de627
+halium/debug recovery_dtbo: bb1871f157...
+```
+
+Conclusão dessa etapa:
+
+```text
+O recovery Halium/debug mudava simultaneamente kernel, dtb, recovery_dtbo e ramdisk.
+Ainda não era possível isolar a causa do travamento.
+```
+
+## Parâmetros reais do recovery stock
+
+`unpack_bootimg --format mkbootimg` mostrou que o recovery stock foi criado com parâmetros específicos:
+
+```text
+--header_version 2
+--os_version 16.0.0
+--os_patch_level 2026-03
+--pagesize 0x00001000
+--base 0x00000000
+--kernel_offset 0x00008000
+--ramdisk_offset 0x20000000
+--second_offset 0x00000000
+--tags_offset 0x01e00000
+--dtb_offset 0x0000000001f00000
+--board SRPTC24A004
+```
+
+Cmdline stock:
+
+```text
+console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0x4a90000 androidboot.console=ttyMSM0 androidboot.hardware=qcom androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 swiotlb=2048 loop.max_part=7 firmware_class.path=/vendor/firmware_mnt/image
+```
+
+## Teste recovery híbrido
+
+Foi criado um recovery híbrido com:
+
+```text
+kernel        = stock
+dtb           = stock
+recovery_dtbo = stock
+ramdisk       = recovery-debug Halium
+```
+
+A primeira versão foi gerada com `pagesize` incorreto por defaults do `mkbootimg`:
+
+```text
+page size: 2048
+```
+
+Depois foi reconstruída com os parâmetros reais do stock:
+
+```text
+page size: 4096
+board: SRPTC24A004
+os_version: 16.0.0
+os_patch_level: 2026-03
+cmdline stock preservada
+```
+
+Hashes validados no híbrido:
+
+```text
+stock_recovery/kernel == hybrid/kernel
+stock_recovery/dtb == hybrid/dtb
+stock_recovery/recovery_dtbo == hybrid/recovery_dtbo
+debug_recovery/ramdisk == hybrid/ramdisk
+```
+
+## Descoberta do footer AVB
+
+O stock tinha 99 MB, enquanto o híbrido reconstruído tinha cerca de 38 MB. A análise mostrou dados extras não-zero após a imagem Android normal e footer AVB no final:
+
+```text
+AVBf
+```
+
+Foi gerada uma versão com footer AVB e tamanho final igual ao stock:
+
+```text
+recovery-hybrid-stockparams-avb.img = 103546880 bytes
+```
+
+Diferença importante:
+
+```text
+Stock:  Algorithm SHA256_RSA4096, VBMeta size 2240
+Híbrido: Algorithm NONE, VBMeta size 512
+```
+
+## Resultado do flash do recovery híbrido
+
+O comportamento mudou em relação aos testes anteriores:
+
+Antes apareciam mensagens completas do bootloader, incluindo RPMB/KG/secure download.
+
+Com o híbrido apareceu apenas algo como:
+
+```text
+Set Warranty Bit : vbmeta
+Set Warranty Bit : recovery
+Samsung logo
+```
+
+Depois ficava preso no logo Samsung.
+
+Conclusão parcial:
+
+```text
+A imagem foi carregada e executada até algum ponto, mas ainda travou.
+Kernel/dtb/recovery_dtbo stock não foram suficientes para tornar o ramdisk Halium funcional.
+```
+
+## USB durante o travamento
+
+Em um momento foi observado no host:
+
+```text
+idVendor=04e8
+idProduct=685d
+Product: SM6150
+Manufacturer: Samsung
+cdc_acm: USB Abstract Control Model driver
+```
+
+Depois houve desconexão.
+
+Interpretação:
+
+```text
+O kernel/recovery chegou a enumerar USB por um instante, mas não manteve ADB ativo.
+```
+
+## Análise do ramdisk Halium
+
+O `init.rc` do ramdisk Halium/debug foi inspecionado. Foram observadas diferenças importantes contra o stock:
+
+```text
+Ausência de binderfs no init
+Ausência de start servicemanager no ponto equivalente
+Ausência de class_start hal
+Diferenças em servicemanager.recovery.rc
+Diferenças em init.qcom.recovery.rc
+Diferenças no health-service samsung recovery
+```
+
+O diff confirmou remoções relevantes:
+
+```text
+binderfs removido
+start servicemanager removido
+class_start hal removido
+servicemanager.recovery.rc diferente
+android.hardware.health-service.samsung-recovery diferente
+```
+
+Conclusão parcial:
+
+```text
+O ramdisk Halium 12 é estruturalmente diferente e provavelmente incompatível com o recovery moderno usado pela base LineageOS/Android 16.
+```
+
+## Teste fix1 no ramdisk Halium
+
+Foi criado `ramdisk-fix1.img` tentando restaurar minimamente:
+
+```text
+start servicemanager
+class_start hal
+correção do bloco fastboot incompleto
+ADB no boot
+```
+
+Resultado:
+
+```text
+Mesmo comportamento: trava no logo Samsung.
+```
+
+Conclusão:
+
+```text
+Correções simples no init.rc Halium não resolvem.
+O problema é mais estrutural do que apenas uma linha de init.
+```
+
+## Teste stock-debug baseado no ramdisk stock
+
+Foi criado um recovery baseado no ramdisk stock, alterando minimamente:
+
+```text
+ro.debuggable=1
+ro.force.debuggable=1
+ro.adb.secure=0
+persist.sys.usb.config=adb
+setprop service.adb.root 1
+setprop sys.usb.config adb
+start adbd
+```
+
+Validações:
+
+```text
+kernel stock preservado
+dtb stock preservado
+recovery_dtbo stock preservado
+ramdisk modificado validado
+AVB footer presente
+tamanho final 103546880 bytes
+```
+
+Resultado no dispositivo:
+
+```text
+Mesmo problema: logo Samsung, sem ADB, sem lsusb.
+```
+
+## Teste clean repack do stock
+
+Foi feita uma prova de controle: extrair o ramdisk stock e reempacotar sem alterações reais, usando os mesmos componentes stock e AVB footer NONE.
+
+Resultado:
+
+```text
+Bootloop
+```
+
+Depois o recovery original foi restaurado e o sistema voltou a funcionar.
+
+Conclusão crítica:
+
+```text
+Mesmo um repack limpo do recovery stock não é equivalente ao recovery Samsung original.
+O fluxo mkbootimg + avbtool add_hash_footer Algorithm NONE não reproduz a imagem aceita/funcional.
+```
+
+## AVB do recovery stock
+
+`avbtool info_image --image recovery-stock.img` mostrou:
+
+```text
+Footer version: 1.0
+Image size: 103546880 bytes
+Original image size: 41349120 bytes
+VBMeta offset: 41349120
+VBMeta size: 2240 bytes
+Algorithm: SHA256_RSA4096
+Rollback Index: 1
+Public key sha1: 2597c218aae470a130f61162feaae70afd97f011
+Partition Name: recovery
+Salt: 442492b2f846a5ff664647da2660105e55f6a8a73331a4d3ba1a6a353ade9fdb
+Digest: 5593a5985bec726491551ea2cabbc338ce89872471a94fa2d84cd262b0e760d2
+Prop: com.android.build.recovery.fingerprint -> samsung/lineage_gta4l/gta4l:16/BP4A.251205.006/a4e156c058:userdebug/release-keys
+```
+
+`avbtool verify_image` verificou a estrutura RSA, mas acusou mismatch do digest:
+
+```text
+vbmeta: Successfully verified footer and SHA256_RSA4096 vbmeta struct in recovery-stock.img
+sha256 digest of recovery.img does not match digest in descriptor
+```
+
+Interpretação atual:
+
+```text
+O footer/vbmeta stock é RSA válido, mas a verificação de hash pelo avbtool local não casa com o conteúdo como interpretado.
+Pode haver detalhe específico Samsung/extração/tamanho original que ainda não entendemos.
+```
+
+## Conclusões da sessão
+
+1. O recovery stock original é o único comprovadamente funcional.
+2. O recovery Halium/debug trava.
+3. O híbrido com kernel/dtb/dtbo stock e ramdisk Halium também trava.
+4. Corrigir init.rc Halium de forma simples não resolve.
+5. Modificar o ramdisk stock e reempacotar também trava.
+6. Reempacotar o stock sem alterações causou bootloop.
+7. Portanto, além de problemas no ramdisk Halium, existe uma limitação crítica no método de repack/assinatura usado.
+8. O fluxo `mkbootimg + avbtool add_hash_footer` com `Algorithm: NONE` não reproduz fielmente o recovery stock.
+
+## Hipóteses atualizadas
+
+```text
+Alta probabilidade: ramdisk Halium 12 incompatível com recovery moderno LineageOS/Android 16.
+Alta probabilidade: repack atual não reproduz AVB/estrutura Samsung funcional.
+Média probabilidade: recovery exige assinatura/metadata AVB semelhante ao stock RSA.
+Baixa probabilidade: kernel/dtb/dtbo sejam a causa principal, pois o híbrido usou os componentes stock.
+```
+
+## Direção recomendada após esta sessão
+
+```text
+1. Não continuar flashes de recovery reconstruído até entender o formato/assinatura.
+2. Preservar o recovery stock original como base segura.
+3. Investigar como LineageOS/Android 16 gera recovery.img para gta4l.
+4. Procurar método de assinatura/repack usado pela build funcional.
+5. Investigar alternativas de debug que não dependam de reempacotar recovery, como logs persistentes, UART, ramo de boot normal ou initramfs de boot.
+```
